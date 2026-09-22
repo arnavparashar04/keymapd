@@ -16,10 +16,36 @@ impl InputMngr{
        }
        Ok(Self{devices, epollfd})
     }
+    pub fn print_devices(&self){
+        for device in &self.devices{
+            println!("{:?}", device.name().unwrap_or("Unknown"));
+        } 
+    }
+
+    pub fn scanevents(&mut self) ->Result<(), Box<dyn std::error::Error>>{
+        let mut events = vec![epoll::Event::new(epoll::Events::empty(), 0); self.devices.len()];
+        let mut waitevents = epoll::wait(self.epollfd, -1, &mut events)?;
+        for event in &events[..waitevents]{
+            let di = event.data as usize;
+            for inputevents in self.devices[di].fetch_events()?{
+                match inputevents.destructure() {
+                    evdev::EventSummary::Key(_, key, 1) => {
+                         println!("{:?} PRESSED", key);
+                    }
+
+                    evdev::EventSummary::Key(_, key, 0) => {
+                         println!("{:?} RELEASED", key);
+                    }
+
+                    _ => {}
+                }
+            }
+        }
+
+        Ok(())
+    }
+
 }
 
-pub fn print_devices(inputmngr: InputMngr){
-   for device in inputmngr.devices{
-       println!("{:?}", device.name().unwrap_or("Unknown"));
-   } 
-}
+
+

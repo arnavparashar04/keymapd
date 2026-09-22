@@ -7,7 +7,8 @@ use input::InputMngr;
 fn main() {
     let mut devicePaths = device::detect_keyboards();
     if let Some(paths) = devicePaths{
-       let input = InputMngr::new(paths).unwrap();
-       input::print_devices(input);
+       let mut input = InputMngr::new(paths).unwrap();
+       input::InputMngr::print_devices(&input);
+       while(true){input::InputMngr::scanevents(&mut input);}
     }
 }
