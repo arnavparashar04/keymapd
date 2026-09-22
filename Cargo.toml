@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 epoll = "4.4.0"
 evdev = "0.13.2"
+uinput = "0.1.3"
