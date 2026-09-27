@@ -1,24 +1,29 @@
 use std::{os::fd::AsRawFd, path::PathBuf};
 use crate::device;
 use evdev::Device;
+use crate::map::evdev_to_uinput;
+use crate::parser::{load_config, Config};
 use crate::output;
 pub struct InputMngr{
     devices: Vec<evdev::Device>,
     epollfd :i32,
-    output: output::OutputMngr
+    output: output::OutputMngr,
+    config: Config,
 }
 impl InputMngr{
     pub fn new(paths: Vec<PathBuf>) -> Result<Self, Box<dyn std::error::Error>>{
        let mut devices = Vec::new();
        let epollfd = epoll::create(false)?;
        let output = output::OutputMngr::new()?;
+       let config = load_config()?;
        for (index, path) in paths.iter().enumerate(){
            let mut device = evdev::Device::open(path)?;
            device.grab()?;
            epoll::ctl(epollfd, epoll::ControlOptions::EPOLL_CTL_ADD, device.as_raw_fd(), epoll::Event::new(epoll::Events::EPOLLIN, index as u64))?;
            devices.push(device);
+
        }
-       Ok(Self{devices, epollfd, output})
+       Ok(Self{devices, epollfd, output, config})
     }
     pub fn print_devices(&self){
         for device in &self.devices{
@@ -32,19 +37,31 @@ impl InputMngr{
         for event in &events[..waitevents]{
             let di = event.data as usize;
             for inputevents in self.devices[di].fetch_events()?{
-                match inputevents.destructure() {
-                    evdev::EventSummary::Key(_, key, 1) => {
-                        self.output.press(key);
-                    }
-                    evdev::EventSummary::Key(_, key, 2) => {
-                        self.output.press(key);
-                    }
-                    evdev::EventSummary::Key(_, key, 0) => {
-                        self.output.release(key);
-                    }
+              match inputevents.destructure() {
+				  evdev::EventSummary::Key(_, key, 1) |
+					  evdev::EventSummary::Key(_, key, 2) => {
+						  if let Some(uinput_key) = evdev_to_uinput(key) {
+							  if let Some(mapping) = self.config.mappings.iter().find(|mapping| mapping.fromKey == uinput_key)
+							  {
+								  self.output.press_uinput(&mapping.toKey);
+							  } else {
+								  self.output.press_uinput(&uinput_key);
+							  }
+						  }
+					  }
+				  evdev::EventSummary::Key(_, key, 0) => {
+					  if let Some(uinput_key) = evdev_to_uinput(key) {
+						  if let Some(mapping) = self.config.mappings.iter().find(|mapping| mapping.fromKey == uinput_key)
+						  {
+							  self.output.release_uinput(&mapping.toKey);
+						  } else {
+							  self.output.release_uinput(&uinput_key);
+						  }
+					  }
+				  }
 
-                    _ => {}
-                }
+				  _ => {}
+			  }  
             }
         }
 
