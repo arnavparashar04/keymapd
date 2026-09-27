@@ -1,4 +1,5 @@
-use std::fs;
+use std::fs::{self, OpenOptions};
+use std::io::Write;
 use evdev::KeyCode;
 use uinput::event::keyboard::{Key, Misc};
 use crate::map::{mapInfo, uInputKey};
@@ -24,7 +25,7 @@ pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
         if line.is_empty() || line.starts_with('#') {
             continue;
         }
-        let Some((lhs, rhs)) = line.split_once('=') else {
+       let Some((lhs, rhs)) = line.split_once('=') else {
             return Err(format!("Invalid config line: {line}").into());
         };
         let lhs = lhs.trim();
@@ -40,6 +41,11 @@ pub fn load_config() -> Result<Config, Box<dyn std::error::Error>> {
             });
         }
     }
+    if hotkey.is_empty() {
+        let mut f = OpenOptions::new().append(true).open(&path)?;
+        writeln!(f, "HOTKEY = KEY_LEFTMETA + KEY_LEFTALT + KEY_K")?;
+        hotkey.extend_from_slice(&[KeyCode::KEY_LEFTMETA, KeyCode::KEY_LEFTALT, KeyCode::KEY_K]);
+    }
     Ok(Config {
         mappings,
         hotkey,
@@ -50,6 +56,7 @@ fn parse_evdev_key(key: &str) -> Result<KeyCode, Box<dyn std::error::Error>> {
         "KEY_A" => Ok(KeyCode::KEY_A),
         "KEY_B" => Ok(KeyCode::KEY_B),
         "KEY_C" => Ok(KeyCode::KEY_C),
+        "KEY_K" => Ok(KeyCode::KEY_K),
         "KEY_ESC" => Ok(KeyCode::KEY_ESC),
         "KEY_ENTER" => Ok(KeyCode::KEY_ENTER),
         "KEY_SPACE" => Ok(KeyCode::KEY_SPACE),
