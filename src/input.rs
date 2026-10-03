@@ -21,6 +21,7 @@ impl InputMngr{
        let config = load_config()?;
        for (index, path) in paths.iter().enumerate(){
            let mut device = evdev::Device::open(path)?;
+           device.set_nonblocking(true)?;
            device.grab()?;
            epoll::ctl(epollfd, epoll::ControlOptions::EPOLL_CTL_ADD, device.as_raw_fd(), epoll::Event::new(epoll::Events::EPOLLIN, index as u64))?;
            devices.push(device);
