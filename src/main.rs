@@ -10,6 +10,7 @@ fn main() {
     if let Some(paths) = devicePaths{
        let mut input = InputMngr::new(paths).unwrap();
        input::InputMngr::print_devices(&input);
+       println!("hello");
        println!("Event scan started");
        loop{
            input::InputMngr::scanevents(&mut input);

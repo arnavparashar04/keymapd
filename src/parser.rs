@@ -124,6 +124,8 @@ fn parse_uinput_key(key: &str) -> Result<uInputKey, Box<dyn std::error::Error>> 
         "KEY_PLAYPAUSE" => Ok(uInputKey::Misc(Misc::PlayPause)),
         "KEY_NEXTSONG" => Ok(uInputKey::Misc(Misc::NextSong)),
         "KEY_PREVIOUSSONG" => Ok(uInputKey::Misc(Misc::PreviousSong)),
+        "KEY_BRIGHTNESSUP" => Ok(uInputKey::Misc(Misc::BrightnessUp)),
+        "KEY_BRIGHTNESSDOWN" => Ok(uInputKey::Misc(Misc::BrightnessDown)),
         _ => Err(format!("Unknown uinput key: {key}").into()),
     }
 }

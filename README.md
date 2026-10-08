@@ -8,7 +8,7 @@ I made this because my keyboard doesn't have a built-in Function Lock (Fn Lock) 
 
 - Custom key remapping using `evdev` and `uinput`.
 - Simple text configuration file.
-- Toggle shortcut (default: `Super + Alt + K`) to enable or disable remapping on the fly.
+- Toggle shortcut (default: `Super + Alt + K`)
 
 ## Configuration
 
@@ -48,22 +48,19 @@ Supported key names match Linux evdev event names:
 - **Function Keys:** `KEY_F1` through `KEY_F12`
 - **Media Keys:** `KEY_MUTE`, `KEY_VOLUMEUP`, `KEY_VOLUMEDOWN`, `KEY_PLAYPAUSE`, `KEY_NEXTSONG`, `KEY_PREVIOUSSONG`
 
-Feel free to add more in src/parser.rs
+Feel free to add more in `src/parser.rs`
 
 ## Building
 
 ### Prerequisites
 
 - Rust / Cargo toolchain
-- Read/write access to `/dev/input/` and `/dev/uinput`.
 
 To run `keymapd` without root privileges, make sure your user belongs to the `input` group:
 
 ```bash
 sudo usermod -aG input $USER
 ```
-
-*(You will need to log out and log back in for group changes to take effect.)*
 
 ### Build Steps
 
@@ -87,41 +84,6 @@ sudo cp target/release/keymapd /usr/local/bin/
 
 ### 2. Create the Service File
 
-#### Option A: System Service (`/etc/systemd/system/keymapd.service`)
-
-Create `/etc/systemd/system/keymapd.service`:
-
-```ini
-[Unit]
-Description=Keymap Daemon
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/keymapd
-Restart=always
-RestartSec=3
-User=your_username
-
-[Install]
-WantedBy=multi-user.target
-```
-
-*Note: `User=your_username` ensures systemd runs the daemon as your user so it automatically reads your `~/.config/keymapd/keymapd.conf`.*
-
-Then enable and start it:
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable --now keymapd
-```
-
----
-
-#### Option B: User Service (`~/.config/systemd/user/keymapd.service`)
-
-If your user account already has permission to read `/dev/input/` and `/dev/uinput` (e.g. via `input` / `uinput` groups), you can set it up as a systemd user service without needing `sudo` to manage it.
-
 Create `~/.config/systemd/user/keymapd.service`:
 
 ```ini
@@ -138,8 +100,7 @@ RestartSec=3
 WantedBy=default.target
 ```
 
-Then enable and start it with the `--user` flag:
-
+Then enable and start it: 
 ```bash
 systemctl --user daemon-reload
 systemctl --user enable --now keymapd
